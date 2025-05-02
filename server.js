@@ -8,49 +8,46 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
-app.use(body.json())
+app.use(body.json());
 
-app.get('/', (req, res) => {
-    res.send("hello there the backend is working :");
-})
+app.get("/", (req, res) => {
+  res.send("✅ Backend is working");
+});
 
-// Create a transporter object using the default SMTP transport
+// Configure the transporter
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port:587,
-    secure:false,
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
+  service: "gmail", // use service instead of host/port for Gmail
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS, // this should be an App Password
+  },
+});
+
+app.post("/api/contact", (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  const mailOptions = {
+    from: email,
+    to: process.env.GMAIL_USER,
+    subject: subject,
+    text: `You have received a new message from your portfolio:
+    
+Name: ${name}
+Email: ${email}
+Message: ${message}`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error("Email send failed:", error);
+      return res.status(500).send({ message: "Failed to send message." });
+    } else {
+      console.log("Email sent:", info.response);
+      return res.status(200).send({ message: "Message received successfully!" });
     }
-})
-
-
-app.post('/api/contact', (req, res) => {
-
-    const { name, email, subject, message } = req.body;
-
-    const mailOptions = {
-        from: email,
-        to: process.env.GMAIL_USER,
-        subject: subject,
-        text: `You have received a new message from your Portfolio :
-        Name: ${name}
-        Email: ${email}
-        Message: ${message}
-    `,
-
-    }
-
-    transporter.sendMail(mailOptions , (error ,info) => {
-           if(error) console.log(error);
-           else{
-            console.log("Email send to " + info.response);
-            return res.status(200).send({message:"Message received successfully!"});
-           }
-    })
-})
+  });
+});
 
 app.listen(PORT, () => {
-    console.log(`server is running on port: ${PORT}`);
-})
+  console.log(`🚀 Server is running on port: ${PORT}`);
+});
